@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Learning Management System</title>
+    <style>
+        /* General styles */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; margin: 0; }
+        
+        /* Navigation Bar */
+        .navbar {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 65px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 15px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: white; border-bottom: 2px solid #3498db; }
+        
+        /* Hamburger Menu */
+        .menu-container { position: relative; }
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 55px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            width: 180px;
+            overflow: hidden;
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .dropdown-menu a:hover { background-color: #f1f1f1; }
+        .show { display: block; }
+
+        /* Dashboard Content */
+        .container { padding: 40px 10%; }
+        .tab-content { display: none; }
+        .active-tab { display: block; }
+        
+        /* Grid Layout for Courses */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .course-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-top: 4px solid #3498db;
+        }
+        .course-card h3 { margin-top: 0; color: #2c3e50; }
+        .instructor-name { color: #7f8c8d; font-style: italic; font-size: 0.9em; }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+        .btn-enroll { background-color: #3498db; color: white; margin-top: 15px; width: 100%; }
+
+        /* Modal Profile Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            width: 400px;
+            border-radius: 8px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;}
+        .form-group input[readonly] { background-color: #eee; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="#" id="home-link" class="active" onclick="showTab('home')">Home</a>
+            <a href="#" id="mycourses-link" onclick="showTab('mycourses')">My Courses</a>
+        </div>
+        
+        <div class="menu-container">
+            <button class="hamburger-btn" onclick="toggleMenu()">&#9776;</button>
+            <div id="dropdown" class="dropdown-menu">
+                <a href="#" onclick="openProfile()">My Profile</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = '#e74c3c' if category == 'error' else '#2ecc71' %}
+                    <div class="flash-alert" style="padding: 15px; margin-bottom: 25px; border-radius: 5px; color: white; text-align: center; font-weight: 500; background-color: {{ bg_color }}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div id="home-tab" class="tab-content active-tab">
+            <h1>Available Courses</h1>
+            <div class="course-grid">
+                
+                {% if courses %}
+                    {% for course in courses %}
+                    <div class="course-card">
+                        <h3>{{ course.CourseName }}</h3>
+                        <p class="instructor-name">Instructor: {{ course.InstructorName or 'To be announced' }}</p>                   
+                        {% if course.CourseID in enrolled_course_ids %}
+                            
+                            <a href="{{ url_for('course_detail', course_id=course.CourseID) }}" class="btn" style="background-color: #28a745; color: white; display: block; text-align: center; text-decoration: none; margin-top: 15px; width: 100%; box-sizing: border-box;">
+                                Go to Course
+                            </a>
+                            
+                        {% else %}
+                            
+                            <form action="/enroll" method="POST">
+                                <input type="hidden" name="course_id" value="{{ course.CourseID }}">
+                                <button type="submit" class="btn btn-enroll">Enroll</button>
+                            </form>
+                            
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% else %}
+                    <p style="color: #666; font-style: italic;">No courses available at the moment.</p>
+                {% endif %}
+                
+            </div>
+        </div>
+
+        <div id="mycourses-tab" class="tab-content">
+            <h1>My Joined Courses</h1>
+            <div class="course-grid" id="enrolled-courses">
+                {% if my_courses %}
+                    {% for course in my_courses %}
+                        <div class="course-card" style="border-top-color: #2ecc71;">
+                            <h3>{{ course.CourseName }}</h3>
+                            <p class="instructor-name">Instructor: {{ course.InstructorName or 'TBA' }}</p>
+                            <a href="{{ url_for('course_detail', course_id=course.CourseID) }}" 
+                               class="btn" 
+                               style="background-color: #2ecc71; color: white; display: block; text-align: center; text-decoration: none; margin-top: 15px; width: 100%; box-sizing: border-box;">
+                                Go to Course
+                            </a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #666; font-style: italic;">You haven't joined any courses yet. Start learning today!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Profile</h2>
+            <form action="/update_profile" method="POST">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="learner_name" value="{{ session.get('user_name', '') }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone_number" value="{{ session.get('phone', '') }}">
+                </div>
+                <div class="form-group">
+                    <label>New Password (Leave blank to keep current)</label>
+                    <input type="password" name="new_password" placeholder="********">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-enroll">Save Changes</button>
+                    <button type="button" class="btn" onclick="closeProfile()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() { document.getElementById("dropdown").classList.toggle("show"); }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active-tab'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active-tab');
+            document.getElementById(tabName + '-link').classList.add('active');
+        }
+
+        function openProfile() { document.getElementById("profileModal").style.display = "block"; toggleMenu(); }
+        function closeProfile() { document.getElementById("profileModal").style.display = "none"; }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById("profileModal")) closeProfile();
+        }
+
+        setTimeout(function() {
+            let alerts = document.querySelectorAll('.flash-alert');
+            alerts.forEach(function(alert) {
+                alert.style.transition = "opacity 0.5s ease";
+                alert.style.opacity = "0";
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            });
+        }, 3000);
+
+    </script>
+</body>
+</html>

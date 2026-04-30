@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; margin: 0; }
+        .navbar { background-color: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; height: 65px; position: sticky; top: 0; z-index: 1000; }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { color: #bdc3c7; text-decoration: none; font-weight: 500; padding: 10px 15px; transition: 0.3s; cursor: pointer; }
+        .nav-links a.active { color: white; border-bottom: 2px solid #3498db; }
+        .menu-container { position: relative; }
+        .hamburger-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 55px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 5px; width: 180px; overflow: hidden; }
+        .dropdown-menu a { display: block; padding: 12px 20px; color: #333; text-decoration: none; font-size: 14px; }
+        .dropdown-menu a:hover { background-color: #f1f1f1; }
+        .show { display: block; }
+        .container { padding: 40px 10%; }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 20px; }
+        .course-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #3498db; transition: transform 0.2s; }
+        .course-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .course-card h3 { margin-top: 0; color: #2c3e50; font-size: 20px; }
+        .course-card p { color: #666; font-size: 15px; line-height: 1.5; }
+        .btn { padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; width: 100%; box-sizing: border-box; text-decoration: none; display: block; text-align: center; margin-top: 15px; }
+        .btn-view { background-color: #3498db; color: white; }
+        .btn-view:hover { background-color: #2980b9; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; width: 400px; border-radius: 8px; position: relative; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; resize: none }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-links">
+            <a id="teaching-link" class="active" onclick="showTab('teaching')">Teaching Courses</a>
+            <a id="add-course-link" onclick="showTab('add-course')">Add New Course</a>
+        </div>
+        
+        <div class="menu-container">
+            <span style="color: white; font-weight: 500;">Instructor {{ session.get('user_name', 'Instructor') }}</span>
+            <button class="hamburger-btn" onclick="toggleMenu()">&#9776;</button>
+            <div id="dropdown" class="dropdown-menu">
+                <a href="#" onclick="openProfile()">Edit Profile</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="teaching-tab" class="tab-content">
+            <h1>My Teaching Courses </h1>
+            <p style="color: #7f8c8d; margin-bottom: 30px;">Manage the courses you are currently assigned to teach. </p>
+            
+            <div class="course-grid">
+                {% if courses %}
+                    {% for course in courses %}
+                    <div class="course-card">
+                        <h3>{{ course.CourseName }}</h3>
+                        <p>{{ course.Description }}</p>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="{{ url_for('instructor_course_detail', course_id=course.CourseID) }}" class="btn btn-view" style="flex: 2;">View Detail</a>
+                            <button onclick="openLectureModal('{{ course.CourseID }}')" class="btn" style="background-color: #f1c40f; color: #2c3e50; flex: 1; margin-top: 15px;">+ Lecture</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #666; font-style: italic; grid-column: 1 / -1;">You are not assigned to teach any courses at the moment. </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="add-course-tab" class="tab-content" style="display: none;">
+            <h1>Create New Course </h1>
+            <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <form action="/instructor/add_course" method="POST">
+                    <div class="form-group">
+                        <label>Course Name</label>
+                        <input type="text" name="course_name" placeholder="e.g., Advanced Python Data Science" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-view" style="background-color: #2ecc71;">Create Course </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="lectureModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">Add New Lecture </h2>
+            <form action="/instructor/add_lecture" method="POST">
+                <input type="hidden" name="course_id" id="modal_course_id">
+                <div class="form-group">
+                    <label>Lecture Title</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Content / Link</label>
+                    <textarea name="content" rows="4"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-view" style="margin: 0;">Add Lecture </button>
+                    <button type="button" class="btn" onclick="closeLectureModal()" style="background: #e74c3c; color: white; margin: 0;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">Edit My Profile</h2>
+            <form action="/update_instructor_profile" method="POST">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" value="{{ session.get('user_name', '') }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Expertise</label>
+                    <input type="text" name="expertise" value="{{ session.get('expertise', '') }}">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" placeholder="Leave blank to keep current">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-view" style="margin: 0;">Save Changes</button>
+                    <button type="button" class="btn" onclick="closeProfile()" style="background: #e74c3c; color: white; margin: 0;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() { document.getElementById("dropdown").classList.toggle("show"); }
+        
+        function openProfile() { document.getElementById("profileModal").style.display = "block"; toggleMenu(); }
+        function closeProfile() { document.getElementById("profileModal").style.display = "none"; }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            document.getElementById(tabName + '-link').classList.add('active');
+        }
+
+        function openLectureModal(courseId) {
+            document.getElementById('modal_course_id').value = courseId;
+            document.getElementById('lectureModal').style.display = 'block';
+        }
+
+        function closeLectureModal() { document.getElementById('lectureModal').style.display = 'none'; }
+
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = "none";
+            }
+            if (!event.target.matches('.hamburger-btn')) {
+                document.getElementById("dropdown").classList.remove("show");
+            }
+        }
+    </script>
+</body>
+</html>

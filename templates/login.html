@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Online Course System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .footer-link a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+        .flash-msg {
+            padding: 10px; 
+            margin-bottom: 15px; 
+            border-radius: 4px; 
+            color: white; 
+            text-align: center;
+        }
+        .flash-error {
+            background-color: #dc3545;
+        }
+        .flash-success {
+            background-color: #28a745;
+        }
+        .site-footer {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 40px 10% 20px 10%;
+            font-size: 14px;
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .footer-col {
+            flex: 1;
+            min-width: 250px;
+        }
+        .footer-col.center-col {
+            text-align: center;
+            flex: 1.5;
+        }
+        .footer-col.right-col {
+            text-align: right;
+        }
+        .footer-col h4 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .footer-col p { 
+            margin: 5px 0; 
+            line-height: 1.6; 
+        }
+        .social-icons { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        .icon-circle {
+            width: 35px; 
+            height: 35px; 
+            background-color: #0056b3;
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center;
+            justify-content: center; 
+            color: white; 
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .icon-circle:hover { 
+            background-color: #3498db; 
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #34495e;
+            font-size: 13px;
+            color: #bdc3c7;
+        }
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            .footer-col, .footer-col.center-col, .footer-col.right-col { 
+                text-align: center; 
+            }
+            .social-icons { 
+                justify-content: center; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <h2>Login</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% set msg_class = 'flash-error' if category == 'error' else 'flash-success' %}
+                  <div class="flash-msg {{ msg_class }}">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+            
+            <div class="footer-link">
+                Don't have an account? <a href="{{ url_for('register') }}">Register now</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-col">
+                <h4>Contact us</h4>
+                <div class="social-icons">
+                    <a href="#" class="icon-circle" title="Website"><i class="fas fa-globe"></i></a>
+                    <a href="tel:+84961714081" class="icon-circle" title="Phone"><i class="fas fa-phone"></i></a>
+                    <a href="mailto:gtqvinh@gmail.com" class="icon-circle" title="Email"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col center-col">
+                <h4 style="color: #3498db; line-height: 1.4;">
+                    ONLINE COURSE MANAGEMENT SYSTEM<br>
+                </h4>
+                <p>+84961714081</p>
+                <p>gtqvinh@gmail.com</p>
+            </div>
+
+            <div class="footer-col right-col">
+                <h4>Follow us</h4>
+                <div class="social-icons" style="justify-content: flex-end;">
+                    <a href="https://www.facebook.com/Vinh.Gtq/" class="icon-circle" style="background-color: #3b5998;" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+    </footer>
+
+</body>
+</html>

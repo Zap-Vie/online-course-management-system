@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.CourseName }} - Details</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; margin: 0; }
+        /* Navigation Bar */
+        .navbar {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 65px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 15px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: white; border-bottom: 2px solid #3498db; }
+        /* Hamburger Menu */
+        .menu-container { position: relative; }
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 55px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            width: 180px;
+            overflow: hidden;
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .dropdown-menu a:hover { background-color: #f1f1f1; }
+        .show { display: block; }
+
+        /* Course Layout */
+        .container { padding: 40px 15%; }
+        .course-header { border-bottom: 2px solid #3498db; margin-bottom: 30px; padding-bottom: 10px; }
+        .description-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; color: #444; }
+        
+        /* Lectures */
+        .lecture-item { background: white; margin-bottom: 15px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .lecture-title { background: #f1f1f1; padding: 15px 20px; font-weight: bold; cursor: pointer; color: #2c3e50; border-left: 5px solid #3498db; }
+        .lecture-content { padding: 20px; display: none; border-top: 1px solid #eee; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Home</a>
+        </div>
+        
+        <div class="menu-container">
+            <span style="color: white; font-weight: 500;">Hello, {{ session.get('user_name', 'Student') }}</span>
+            <button class="hamburger-btn" onclick="toggleMenu()">&#9776;</button>
+            <div id="dropdown" class="dropdown-menu">
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="course-header">
+            <h1>{{ course.CourseName }}</h1>
+        </div>
+
+        <h3>Course Description</h3>
+        <div class="description-box">
+            {{ course.Description }}
+        </div>
+
+        <h3>Course Curriculum (Lectures)</h3>
+        {% for lecture in lectures %}
+        <div class="lecture-item">
+            <div class="lecture-title" onclick="toggleLecture(this)">
+                {{ loop.index }}. {{ lecture.Title }}
+            </div>
+            <div class="lecture-content">
+                {{ lecture.Content }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleMenu() { 
+            document.getElementById("dropdown").classList.toggle("show"); 
+        }
+        function toggleLecture(element) {
+            const content = element.nextElementSibling;
+            content.style.display = (content.style.display === "block") ? "none" : "block";
+        }
+        window.onclick = function(event) {
+            if (!event.target.matches('.hamburger-btn')) {
+                document.getElementById("dropdown").classList.remove("show");
+            }
+        }
+    </script>
+</body>
+</html>

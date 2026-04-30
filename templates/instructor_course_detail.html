@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Course - {{ course.CourseName }}</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; margin: 0; }
+        .navbar { background-color: #2c3e50; color: white; padding: 1rem 10%; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 40px 10%; }
+        .header-section { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; border-left: 5px solid #3498db; }
+        .lecture-list { list-style: none; padding: 0; }
+        .lecture-item { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .lecture-info h4 { margin: 0 0 5px 0; color: #2c3e50; }
+        .lecture-info p { margin: 0; color: #7f8c8d; font-size: 14px; }
+        .btn-back { color: white; text-decoration: none; font-weight: bold; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        
+        /* Thêm CSS cho Huy hiệu thống kê (Stat Badge) */
+        .stat-badge {
+            background-color: #f1c40f;
+            color: #2c3e50;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('instructor_dashboard') }}" class="btn-back">&larr; Back to Dashboard</a>
+        <div style="font-weight: bold;">Instructor Mode</div>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 style="margin: 0;">{{ course.CourseName }}</h1>
+                    <div class="stat-badge">
+                        👥 Total Learners: {{ student_count }}
+                    </div>
+                </div>
+            </div>
+            <p style="color: #666; margin-top: 15px; line-height: 1.6;">{{ course.Description }}</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Curriculum ({{ lectures|length }} Lectures)</h2>
+        </div>
+
+        <ul class="lecture-list">
+            {% if lectures %}
+                {% for lecture in lectures %}
+                <li class="lecture-item">
+                    <div class="lecture-info">
+                        <h4>Lecture {{ loop.index }}: {{ lecture.Title }}</h4>
+                        <p>{{ lecture.Content[:100] }}{% if lecture.Content|length > 100 %}...{% endif %}</p>
+                    </div>
+                    <div>
+                        <form action="/instructor/delete_lecture" method="POST" style="display:inline;">
+                            <input type="hidden" name="lecture_id" value="{{ lecture.LectureID }}">
+                            <input type="hidden" name="course_id" value="{{ course.CourseID }}">
+                            <button type="submit" class="btn-delete" onclick="return confirm('Delete this lecture?')">Delete</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #95a5a6; padding: 40px; background: white; border-radius: 8px;">No lectures added yet.</p>
+            {% endif %}
+        </ul>
+    </div>
+</body>
+</html>
