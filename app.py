@@ -2,11 +2,16 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import backend
-
-load_dotenv()
+import subprocess
+from apscheduler.schedulers.background import BackgroundScheduler
+from db_backup import backup_database
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(func=backup_database, trigger="interval", hours=12)
+scheduler.start()
 
 @app.route('/')
 def index():
