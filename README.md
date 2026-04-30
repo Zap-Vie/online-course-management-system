@@ -58,6 +58,7 @@ DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=online_course_db
 SECRET_KEY=your_flask_secretkey
+MYSQLDUMP_PATH=SQLDUMP.exe path
 ```
 
 ### 4. Run the Application
