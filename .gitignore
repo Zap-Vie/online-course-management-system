@@ -1,10 +1,5 @@
-# Bỏ qua thư mục môi trường ảo Python
 venv/
 env/
-
-# Bỏ qua các file cache của Python
 __pycache__/
 *.pyc
-
-# Bỏ qua các file nhạy cảm chứa mật khẩu (nếu bạn có dùng)
 .env
