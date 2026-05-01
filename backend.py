@@ -140,7 +140,26 @@ def initialize_database():
             VALUES (CONCAT('Learner ', NEW.LearnerID, ' enrolled in Course ', NEW.CourseID));
         END
     """)
-    
+    cursor.execute("DROP TRIGGER IF EXISTS trg_after_enrollment_update")
+    cursor.execute("""
+        CREATE TRIGGER trg_after_enrollment_update 
+        AFTER UPDATE ON Enrollments 
+        FOR EACH ROW 
+        BEGIN
+            INSERT INTO AuditLog (ActionText) 
+            VALUES (CONCAT('Enrollment ', NEW.EnrollmentID, ' updated: Learner ', NEW.LearnerID, ' changed Course from ', OLD.CourseID, ' to ', NEW.CourseID));
+        END
+    """)
+    cursor.execute("DROP TRIGGER IF EXISTS trg_after_enrollment_delete")
+    cursor.execute("""
+        CREATE TRIGGER trg_after_enrollment_delete 
+        AFTER DELETE ON Enrollments 
+        FOR EACH ROW 
+        BEGIN
+            INSERT INTO AuditLog (ActionText) 
+            VALUES (CONCAT('Learner ', OLD.LearnerID, ' dropped Course ', OLD.CourseID));
+        END
+    """)
     cursor.execute("DROP TRIGGER IF EXISTS trg_learner_insert")
     cursor.execute("""
         CREATE TRIGGER trg_learner_insert AFTER INSERT ON Learners
@@ -235,6 +254,36 @@ def initialize_database():
         FOR EACH ROW BEGIN
             INSERT INTO AuditLog (ActionText)
             VALUES (CONCAT('DELETE: Lecture removed. Title: ', OLD.Title, ' (ID: ', OLD.LectureID, ') from Course ', OLD.CourseID));
+        END
+    """)
+    cursor.execute("DROP TRIGGER IF EXISTS trg_after_account_insert")
+    cursor.execute("""
+        CREATE TRIGGER trg_after_account_insert 
+        AFTER INSERT ON Account 
+        FOR EACH ROW 
+        BEGIN
+            INSERT INTO AuditLog (ActionText) 
+            VALUES (CONCAT('New account created: ', NEW.Email, ' with Role ', NEW.Role));
+        END
+    """)
+    cursor.execute("DROP TRIGGER IF EXISTS trg_after_account_update")
+    cursor.execute("""
+        CREATE TRIGGER trg_after_account_update 
+        AFTER UPDATE ON Account 
+        FOR EACH ROW 
+        BEGIN
+            INSERT INTO AuditLog (ActionText) 
+            VALUES (CONCAT('Account updated: ', NEW.Email, ' (Role changed from ', OLD.Role, ' to ', NEW.Role, ')'));
+        END
+    """)
+    cursor.execute("DROP TRIGGER IF EXISTS trg_after_account_delete")
+    cursor.execute("""
+        CREATE TRIGGER trg_after_account_delete 
+        AFTER DELETE ON Account 
+        FOR EACH ROW 
+        BEGIN
+            INSERT INTO AuditLog (ActionText) 
+            VALUES (CONCAT('Account deleted: ', OLD.Email, ' with Role ', OLD.Role));
         END
     """)
     conn.commit()
