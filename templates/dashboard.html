@@ -145,34 +145,40 @@
         {% endwith %}
 
         <div id="home-tab" class="tab-content active-tab">
-            <h1>Available Courses</h1>
-            <div class="course-grid">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1 style="margin: 0;">Available Courses</h1>
                 
+                <form action="{{ url_for('dashboard') }}" method="POST" style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" name="search_query" value="{{ search_query }}" placeholder="Search courses by name..." style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 250px;">
+                    <button type="submit" class="btn" style="background-color: #2c3e50; color: white;">Search</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('dashboard') }}" class="btn" style="background-color: #e74c3c; color: white; text-decoration: none; display: flex; align-items: center; padding: 10px 20px;">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="course-grid">
                 {% if courses %}
                     {% for course in courses %}
                     <div class="course-card">
                         <h3>{{ course.CourseName }}</h3>
                         <p class="instructor-name">Instructor: {{ course.InstructorName or 'To be announced' }}</p>                   
+                        
                         {% if course.CourseID in enrolled_course_ids %}
-                            
                             <a href="{{ url_for('course_detail', course_id=course.CourseID) }}" class="btn" style="background-color: #28a745; color: white; display: block; text-align: center; text-decoration: none; margin-top: 15px; width: 100%; box-sizing: border-box;">
                                 Go to Course
                             </a>
-                            
                         {% else %}
-                            
                             <form action="/enroll" method="POST">
                                 <input type="hidden" name="course_id" value="{{ course.CourseID }}">
                                 <button type="submit" class="btn btn-enroll">Enroll</button>
                             </form>
-                            
                         {% endif %}
                     </div>
-                {% endfor %}
+                    {% endfor %}
                 {% else %}
                     <p style="color: #666; font-style: italic;">No courses available at the moment.</p>
                 {% endif %}
-                
             </div>
         </div>
 

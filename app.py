@@ -85,16 +85,20 @@ def logout():
     return redirect(url_for('login'))
 
 # LEARNER
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'email' not in session:
         flash('Please login to access this page.', 'error')
         return redirect(url_for('login'))
     email = session['email']
-    all_courses = backend.get_all_courses_with_instructors()
+    search_query = request.form.get('search_query', '').strip()
+    if search_query:
+        all_courses = backend.search_courses_by_name(search_query)
+    else:
+        all_courses = backend.get_all_courses_with_instructors()
     enrolled_course_ids = backend.get_enrolled_course_ids(email)
     my_courses = [c for c in all_courses if c['CourseID'] in enrolled_course_ids]
-    return render_template('dashboard.html', courses=all_courses, enrolled_course_ids=enrolled_course_ids, my_courses=my_courses)
+    return render_template('dashboard.html', courses=all_courses, enrolled_course_ids=enrolled_course_ids, my_courses=my_courses, search_query=search_query)
 
 @app.route('/course/<int:course_id>')
 def course_detail(course_id):

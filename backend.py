@@ -305,6 +305,20 @@ def initialize_database():
             VALUES (CONCAT('Account deleted: ', OLD.Email, ' with Role ', OLD.Role));
         END
     """)
+    # 6. Create Indexes
+    index_queries = [
+        "CREATE INDEX idx_course_name ON Courses(CourseName)",
+        "CREATE INDEX idx_enrollment_learner ON Enrollments(LearnerID)",
+        "CREATE INDEX idx_enrollment_course ON Enrollments(CourseID)"
+    ]
+    for query in index_queries:
+        try:
+            cursor.execute(query)
+        except mysql.connector.Error as err:
+            if err.errno == 1061:
+                pass
+            else:
+                print(err)
     conn.commit()
     cursor.close()
     conn.close()
@@ -682,4 +696,14 @@ def get_all_learners_with_courses():
         if row['CourseName']:
             learners_dict[learner_id]['Courses'].append(row['CourseName'])
     return list(learners_dict.values())
+
+def search_courses_by_name(search_term):
+    query = """
+        SELECT c.CourseID, c.CourseName, c.Description, i.InstructorName, i.Expertise, i.Email
+        FROM Courses c
+        LEFT JOIN Instructors i ON c.InstructorID = i.InstructorID
+        WHERE c.CourseName LIKE %s
+    """
+    like_term = f"%{search_term}%"
+    return fetch_all(query, (like_term,))
 
