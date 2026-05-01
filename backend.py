@@ -370,56 +370,30 @@ def add_enrollment(learner_id, course_id):
     return execute_write(query, (learner_id, course_id))
 
 def add_account(email, password, role):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    if role not in [0, 1]:
+        print("Invalid role. Must be 0 (Learner) or 1 (Instructor).")
+        return False
+        
+    if fetch_all("SELECT Email FROM Account WHERE Email = %s", (email,)):
+        print(f"Account with email {email} already exists.")
+        return False
+        
     try:
-        check_query = "SELECT Email FROM Account WHERE Email = %s"
-        cursor.execute(check_query, (email,))
-        if cursor.fetchone():
-            print(f"Account with email {email} already exists.")
-            return False
-        if role not in [0, 1]:
-            print("Invalid role. Must be 0 (Learner) or 1 (Instructor).")
-            return False
-        hashed_password = generate_password_hash(password)
-        insert_query = "INSERT INTO Account (Email, Password, Role) VALUES (%s, %s, %s)"
-        cursor.execute(insert_query, (email, hashed_password, role))
-        conn.commit()
+        execute_write("INSERT INTO Account (Email, Password, Role) VALUES (%s, %s, %s)", 
+                      (email, generate_password_hash(password), role))
         return True
-    except mysql.connector.Error as db_err:
-        conn.rollback()
-        print(f"Database error occurred: {db_err}")
-        raise
-    except Exception as e:
-        conn.rollback()
-        print(f"An error occurred: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    except Exception:
+        return False
 
 def verify_account(email, password):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        query = "SELECT Password, Role FROM Account WHERE Email = %s"
-        cursor.execute(query, (email,))
-        account = cursor.fetchone()
-        if account:
-            if check_password_hash(account['Password'], password):
-                return account['Role']
-            else:
-                print("Invalid password.")
-                return None
-        else:
-            print("Account not found.")
-            return None
-    except mysql.connector.Error as db_err:
-        print(f"Database error occurred: {db_err}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    result = fetch_all("SELECT Password, Role FROM Account WHERE Email = %s", (email,))
+    if result:
+        if check_password_hash(result[0]['Password'], password):
+            return result[0]['Role']
+        print("Invalid password.")
+    else:
+        print("Account not found.")
+    return None
 
 def insert_manager(email, plain_password):
     hashed_password = generate_password_hash(plain_password)
@@ -537,44 +511,10 @@ def delete_course(course_id):
         conn.close()
 
 def delete_enrollment(enrollment_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        query = "DELETE FROM Enrollments WHERE EnrollmentID = %s"
-        cursor.execute(query, (enrollment_id,))
-        conn.commit()
-        return cursor.rowcount       
-    except mysql.connector.Error as db_err:
-        conn.rollback()
-        print(f"Database error occurred: {db_err}")
-        raise
-    except Exception as e:
-        conn.rollback()
-        print(f"An error occurred: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    return execute_write("DELETE FROM Enrollments WHERE EnrollmentID = %s", (enrollment_id,))
 
 def delete_lecture(course_id, lecture_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        query = "DELETE FROM Lectures WHERE CourseID = %s AND LectureID = %s"
-        cursor.execute(query, (course_id, lecture_id))
-        conn.commit()
-        return cursor.rowcount 
-    except mysql.connector.Error as db_err:
-        conn.rollback()
-        print(f"Database error occurred: {db_err}")
-        raise
-    except Exception as e:
-        conn.rollback()
-        print(f"An error occurred: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    return execute_write("DELETE FROM Lectures WHERE CourseID = %s AND LectureID = %s", (course_id, lecture_id))
 
 def reset_account(email):
     if not check_account_exists(email):
@@ -587,21 +527,7 @@ def reset_account(email):
     return True
 
 def update_password(email, password):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        hashed_password = generate_password_hash(password)
-        update_query = "UPDATE Account SET Password = %s WHERE Email = %s"
-        cursor.execute(update_query, (hashed_password, email))
-        conn.commit()
-        return cursor.rowcount
-    except mysql.connector.Error as db_err:
-        conn.rollback()
-        print(f"Database error occurred: {db_err}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    return execute_write("UPDATE Account SET Password = %s WHERE Email = %s", (generate_password_hash(password), email))
 
 # GET DATA
 def get_instructor_workload():
