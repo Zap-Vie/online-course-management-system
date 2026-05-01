@@ -1,8 +1,6 @@
 import os
-from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import backend
-import subprocess
 from apscheduler.schedulers.background import BackgroundScheduler
 from db_backup import backup_database
 
