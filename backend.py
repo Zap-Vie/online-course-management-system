@@ -586,17 +586,19 @@ def get_system_statistics():
     stats['enrollment_trend'] = fetch_all(trend_query)
     return stats
 
-def get_course_statistics(course_id):
+def learner_count(course_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True) 
     try:
         cursor.callproc('sp_course_summary', (course_id,))
         for result in cursor.stored_results():
-            return result.fetchall()
-        return [] 
+            rows = result.fetchall()
+            if rows:
+                return rows[0]['TotalLearners']
+        return 0
     except Exception as db_err:
-        print(f"Database error in get_course_statistics: {db_err}")
-        return []
+        print(f"Database error in learner_count: {db_err}")
+        return 0
     finally:
         cursor.close()
         conn.close()

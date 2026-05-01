@@ -168,9 +168,7 @@ def instructor_course_detail(course_id):
         return redirect(url_for('login'))
     course = backend.get_course_by_id(course_id)
     lectures = backend.get_lectures_by_course(course_id)
-    enroll_query = "SELECT COUNT(*) as student_count FROM Enrollments WHERE CourseID = %s"
-    enroll_data = backend.fetch_all(enroll_query, (course_id,))
-    student_count = enroll_data[0]['student_count'] if enroll_data else 0
+    student_count = backend.learner_count(course_id)
     return render_template('instructor_course_detail.html', course=course, lectures=lectures, student_count=student_count)
 
 @app.route('/update_instructor_profile', methods=['POST'])
