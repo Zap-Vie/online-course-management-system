@@ -113,9 +113,19 @@ def initialize_database():
         LEFT JOIN Courses c ON i.InstructorID = c.InstructorID 
         GROUP BY i.InstructorID, i.InstructorName
     """)
-
+    cursor.execute("DROP VIEW IF EXISTS v_enrollment_trend")
+    cursor.execute("""
+        CREATE VIEW v_enrollment_trend AS
+        SELECT DATE_FORMAT(e.EnrollmentDate, '%Y-%m') AS Month,
+        c.CourseID,
+        c.CourseName,
+        COUNT(e.EnrollmentID) AS LearnerCount
+        FROM Enrollments e
+        JOIN Courses c ON e.CourseID = c.CourseID
+        GROUP BY DATE_FORMAT(e.EnrollmentDate, '%Y-%m'), c.CourseID, c.CourseName
+        ORDER BY Month;"""
+    )
     # 4. Create Stored Procedures
-
     cursor.execute("DROP PROCEDURE IF EXISTS sp_course_summary")
     cursor.execute("""
         CREATE PROCEDURE sp_course_summary(IN p_course_id INT)
@@ -128,7 +138,16 @@ def initialize_database():
             GROUP BY c.CourseID;
         END
     """)
-
+    cursor.execute("DROP PROCEDURE IF EXISTS sp_system_statistics")
+    cursor.execute("""
+        CREATE PROCEDURE sp_system_statistics()
+        BEGIN
+            SELECT COUNT(*) AS total_courses FROM Courses;
+            SELECT COUNT(*) AS total_learners FROM Learners;
+            SELECT * FROM v_instructor_load ORDER BY TotalCourses DESC;
+            SELECT * FROM v_enrollment_trend;
+        END
+    """)
     # 5. Create Triggers
     cursor.execute("DROP TRIGGER IF EXISTS trg_after_enrollment")
     cursor.execute("""
@@ -535,31 +554,18 @@ def get_instructor_workload():
     return fetch_all(query)
 
 def get_system_statistics():
-    stats = {
-        'total_courses': 0,
-        'total_learners': 0,
-        'workload': [],
-        'enrollment_trend': []
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True) 
+    cursor.callproc('sp_system_statistics')
+    results = []
+    for result in cursor.stored_results():
+        results.append(result.fetchall())
+    return {
+        'total_courses': results[0][0]['total_courses'] if results[0] else 0,
+        'total_learners': results[1][0]['total_learners'] if results[1] else 0,
+        'workload': results[2],
+        'enrollment_trend': results[3]
     }
-    courses_result = fetch_all("SELECT COUNT(*) as count FROM Courses")
-    if courses_result:
-        stats['total_courses'] = courses_result[0]['count']
-    learners_result = fetch_all("SELECT COUNT(*) as count FROM Learners")
-    if learners_result:
-        stats['total_learners'] = learners_result[0]['count']
-    stats['workload'] = fetch_all("SELECT * FROM v_instructor_load ORDER BY TotalCourses DESC")
-    trend_query = """
-        SELECT DATE_FORMAT(EnrollmentDate, '%Y-%m') AS Month,
-                c.CourseID,
-                c.CourseName, 
-                COUNT(EnrollmentID) AS LearnerCount
-        FROM Enrollments e
-        JOIN Courses c ON e.CourseID = c.CourseID
-        GROUP BY DATE_FORMAT(e.EnrollmentDate, '%Y-%m'), c.CourseID, c.CourseName
-        ORDER BY Month
-    """
-    stats['enrollment_trend'] = fetch_all(trend_query)
-    return stats
 
 def learner_count(course_id):
     conn = get_db_connection()

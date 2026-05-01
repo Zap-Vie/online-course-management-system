@@ -26,6 +26,12 @@
         .dropdown-menu a:hover { background-color: #f1f1f1; }
         .show { display: block; }
         .container { padding: 40px 10%; }
+        .alert {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
         .alert-error { background-color: #e74c3c; }
         .alert-success { background-color: #2ecc71; }
         .flash-alert { padding: 15px; margin-bottom: 25px; border-radius: 5px; color: white; text-align: center; font-weight: 500; }
@@ -105,6 +111,17 @@
 
         <div id="add-instructor-tab" class="tab-content active">
             <div class="admin-form-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                            {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
                 <form action="/manager/add_instructor" method="POST">
                     <div class="form-group">
                         <label>Instructor Full Name</label>
@@ -429,7 +446,7 @@
         }
 
         setTimeout(() => {
-            document.querySelectorAll('.flash-alert').forEach(alert => {
+            document.querySelectorAll('.flash-alert, .alert').forEach(alert => {
                 alert.style.transition = "opacity 0.5s ease";
                 alert.style.opacity = "0";
                 setTimeout(() => alert.remove(), 500);
