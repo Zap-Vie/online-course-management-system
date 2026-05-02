@@ -306,19 +306,13 @@ def initialize_database():
         END
     """)
     # 6. Create Indexes
-    index_queries = [
-        "CREATE INDEX idx_course_name ON Courses(CourseName)",
-        "CREATE INDEX idx_enrollment_learner ON Enrollments(LearnerID)",
-        "CREATE INDEX idx_enrollment_course ON Enrollments(CourseID)"
-    ]
-    for query in index_queries:
-        try:
-            cursor.execute(query)
-        except mysql.connector.Error as err:
-            if err.errno == 1061:
-                pass
-            else:
-                print(err)
+    try:
+        cursor.execute("CREATE INDEX idx_course_name ON Courses(CourseName)")
+    except mysql.connector.Error as err:
+        if err.errno == 1061:
+            pass
+        else:
+            print(err)
     conn.commit()
     cursor.close()
     conn.close()
