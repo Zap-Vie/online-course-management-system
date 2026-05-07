@@ -337,14 +337,6 @@ def execute_write(query, params=None):
         cursor.close()
         conn.close()
 
-def execute_proc(proc_name, args):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.callproc(proc_name, args)
-    conn.commit()
-    cursor.close()
-    conn.close()
-
 def add_learner(name, email, phone):
     """Generates an 8-digit LearnerID (YYYYXXXX) and inserts the learner."""
     current_year = datetime.datetime.now().year
